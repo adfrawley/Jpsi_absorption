@@ -27,9 +27,9 @@ double get_WS_rho_0();
 #include "calculate_sigma_breakup.C"
 
 // only one of these ata a time!
-#define PAU
+//#define PAU
 //#define PAL
-//#define HEAU
+#define HEAU
 
 // set parameters here so macro can be called by condor with different parameters, for error estimation
 void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, double vcc = 1.0, int process = 0) 
@@ -334,23 +334,32 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
   //   -- this agrees perfectly with the results of "calculate_sigma_breakup.C"
   double rT_avge[NCENT];
   double thick_avge[NCENT];
+  double thick_avge_ncoll[NCENT];
   for(int icent=0;icent<NCENT;icent++)
     {
       rT_avge[icent]=0.0;
       thick_avge[icent]=0.0;
+      thick_avge_ncoll[icent]=0.0;
       double wt=0.0;
+      double wt_ncoll=0.0;
 
       for(int irt=0;irt<NRT;irt++)
 	{
 	  rT_avge[icent] += rT[irt]*rT_weight[icent][irt];
 	  thick_avge[icent] += thick[irt]*rT_weight[icent][irt];
+	  thick_avge_ncoll[icent] += thick[irt]*rT_weight[icent][irt] * thick[irt];  // add weight for T_A scaling of hard process
 	  wt += rT_weight[icent][irt];
-	  //cout << " icent " << icent << " rT " << rT[irt] << " thick " << thick[irt] << " rT_weight " << rT_weight[icent][irt] << " rT_avge " << rT_avge[icent] << " thick_avge " << thick_avge[icent] << endl;
+	  wt_ncoll += rT_weight[icent][irt] * thick[irt];
+	  //cout << " icent " << icent << " rT " << rT[irt] << " thick " << thick[irt] << " wt " << wt << " wt_ncoll " << wt_ncoll << " rT_weight " << rT_weight[icent][irt] << " rT_avge " << rT_avge[icent] << " thick_avge " << thick_avge[icent] << " thick_avge_ncoll " << thick_avge_ncoll[icent] << endl;
 	}
 
       rT_avge[icent] = rT_avge[icent]/wt;
       thick_avge[icent] = thick_avge[icent]/wt;
-      cout << " icent " << icent << " rT_avge " << rT_avge[icent] << " thick_avge " << thick_avge[icent] << endl;
+      thick_avge_ncoll[icent] = thick_avge_ncoll[icent]/wt_ncoll;
+      cout << " icent " << icent << " rT_avge " << rT_avge[icent] 
+	   << " thick_avge " << thick_avge[icent] 
+	   << " thick_avge_ncoll " << thick_avge_ncoll[icent]
+	   << endl;
     }
 
 
