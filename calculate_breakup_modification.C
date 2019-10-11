@@ -26,8 +26,10 @@ double get_WS_rho_0();
 // we will need to call functions from this macro
 #include "calculate_sigma_breakup.C"
 
+// only one of these ata a time!
 #define PAU
 //#define PAL
+//#define HEAU
 
 // set parameters here so macro can be called by condor with different parameters, for error estimation
 void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, double vcc = 1.0, int process = 0) 
@@ -52,6 +54,10 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
 #ifdef PAL
   // has to be 0 for Au target
   targ_index = 1;
+#endif
+
+#ifdef HEAU
+  targ_index = 0;
 #endif
   
   static const int NRT=70;
@@ -128,8 +134,8 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
   hrT[3]->Add( (TH1D*) hrT_in[4]->Clone());  // 30-40
   hrT[4] =  (TH1D*) hrT_in[5]->Clone();   // 40-50
   hrT[4]->Add( (TH1D*) hrT_in[6]->Clone());  // 50-60
-  hrT[5] =  (TH1D*) hrT_in[8]->Clone();   // I think this is actually 60-84, based on counts
-  //hrT[5]->Add( (TH1D*) hrT_in[7]->Clone());  // 60-70
+  hrT[5] =  (TH1D*) hrT_in[8]->Clone();   // is this  actually 60-84, based on counts?
+  hrT[5]->Add( (TH1D*) hrT_in[7]->Clone());  // 60-70
   // MB
   hrT[6] = (TH1D*) hrT[0]->Clone();
   hrT[6]->Add(hrT[1]);
@@ -203,8 +209,66 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
 
 #endif
 
+#ifdef HEAU
+
+  cout << "Using PHENIX Glauber HeAu rT distributions" << endl;
+  
+  // get the HeAu rT distributions from a file made by Jamie
+  //===================================
+  /*
+    for He+Au with 9 centrality bins (the standard 9 we have used, i.e. 0-5, 5-10, 10-20, 20-30, 30-40, 40-50, 50-60, 60-70, 70-84). 
+  */
+  TFile *fhist = new TFile("rT_distributions_3heau.root");
+  if(!fhist)
+    {
+      cout << "Failed to open rT distribution file " << endl;
+      return;
+    }
+
+  static const int NCENT_in = 9;
+  char hname[NCENT_in][100]={"himpact_cent0","himpact_cent1","himpact_cent2","himpact_cent3","himpact_cent4", "himpact_cent5", "himpact_cent6", "himpact_cent7", "himpact_cent8"};
+  TH1D *hrT_in[NCENT_in];
+  for(int icent=0;icent<NCENT_in;icent++)
+    {
+      cout << "Getting 3He+Au histogram " << hname[icent] << endl;
+      
+      hrT_in[icent] = (TH1D *) fhist->Get(hname[icent]);
+      if(!hrT_in[icent])
+	{
+	  cout << "Did not get histogram " << hname[icent] << endl;
+	  return;
+	}
+      cout << "  icent " << icent << " hrT_in integral " << hrT_in[icent]->Integral() << endl;
+    }
+
+  // combine glauber centralities to get the experimental ones
+  //========================================
+  static const int NCENT = 4;  // includes MB
+  TH1D *hrT[NCENT];
+  hrT[0] = (TH1D*) hrT_in[0]->Clone();   // 0-5
+  hrT[0] ->Add( (TH1D*) hrT_in[1]->Clone());   // 5-10
+  hrT[0]->Add((TH1D*) hrT_in[2]->Clone());   // 10-20
+  hrT[1] =  (TH1D*) hrT_in[3]->Clone();   // 20-30
+  hrT[1]->Add( (TH1D*) hrT_in[4]->Clone());  // 30-40
+  hrT[2] =  (TH1D*) hrT_in[5]->Clone();   // 40-50
+  hrT[2]->Add( (TH1D*) hrT_in[6]->Clone());  // 50-60
+  hrT[2]->Add( (TH1D*) hrT_in[7]->Clone());  // 60-70
+  //hrT[2] =  (TH1D*) hrT_in[8]->Clone();  // 70-84  // the counts here seem too large - Jamie said to ignore this bin
+  // MB
+  hrT[3] = (TH1D*) hrT[0]->Clone();
+  hrT[3]->Add(hrT[1]);
+  hrT[3]->Add(hrT[2]);
+  
+  double ncoll[NCENT] = {};
+  int col[NCENT] = {kRed, kGreen, kBlue, kBlack};
+  int centlow[NCENT] = {0, 20, 40, 0};
+  int centhigh[NCENT] = {20,40,72,100};
+  
+#endif
+
 #ifndef PAU
 #ifndef PAL
+#ifndef HEAU
 
   cout << "Using default rT distribution from WS parameters ws_radius " << ws_radius << " ws_diffusion " << ws_diff  
        << " rho_0 " << rho_0<< endl;
@@ -244,6 +308,7 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
 
 #endif
 #endif
+#endif
 
   double rT[NRT];
   double thick[NRT];
@@ -264,6 +329,30 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
       thick[irt] = get_thickness_integral(rT[irt]);
       //cout << " irt " << irt << " rT " << rT[irt] << " thick " << thick[irt] << endl;
     }
+
+  // As a check, calculate the average rT within each centrality bin using the rT distributions for the centrality bins
+  //   -- this agrees perfectly with the results of "calculate_sigma_breakup.C"
+  double rT_avge[NCENT];
+  double thick_avge[NCENT];
+  for(int icent=0;icent<NCENT;icent++)
+    {
+      rT_avge[icent]=0.0;
+      thick_avge[icent]=0.0;
+      double wt=0.0;
+
+      for(int irt=0;irt<NRT;irt++)
+	{
+	  rT_avge[icent] += rT[irt]*rT_weight[icent][irt];
+	  thick_avge[icent] += thick[irt]*rT_weight[icent][irt];
+	  wt += rT_weight[icent][irt];
+	  //cout << " icent " << icent << " rT " << rT[irt] << " thick " << thick[irt] << " rT_weight " << rT_weight[icent][irt] << " rT_avge " << rT_avge[icent] << " thick_avge " << thick_avge[icent] << endl;
+	}
+
+      rT_avge[icent] = rT_avge[icent]/wt;
+      thick_avge[icent] = thick_avge[icent]/wt;
+      cout << " icent " << icent << " rT_avge " << rT_avge[icent] << " thick_avge " << thick_avge[icent] << endl;
+    }
+
 
   // breakup cross section at backward rapidity only
   // calculated from time spent in nucleus as per 2013 paper
@@ -310,7 +399,7 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
     }
 
   // Calculate the effect of the absorption cross section
-  //     - uses methods in "../time_spent_in_nucleus/calculate_sigma_breakup.C" - included above
+  //     - uses methods in "calculate_sigma_breakup.C" - included above
 
   cout << "Calculate sigbr " << endl;
 
@@ -340,7 +429,7 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
 	  for(int irt=0;irt<NRT;irt++)
 	    {
 	      // Note that sigbr is in mb, multiplying it by 0.10 converts it to fm^2
-	      // thick is TA at rT[irt]. It has units of 1/fm^2. So the product of thick*(sigbr*0.1) is breakup probability
+	      // thick is T_A at rT[irt]. It has units of 1/fm^2. So the product of thick*(sigbr*0.1) is breakup probability
 	      // Take the average thickness as being 1/2 the total thickness 
 	      //   - i.e. the average absorption corresponds to a starting point of z = 0
 
@@ -352,24 +441,6 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
     }
 
   /*
-  // As a check, calculate the average rT within each centrality bin using the rT distributions for the four centrality bins
-  //   -- this agrees perfectly with the results of "calculate_sigma_breakup.C"
-  double rT_avge[NCENT];
-  for(int icent=0;icent<NCENT;icent++)
-    {
-      rT_avge[icent]=0.0;
-      double wt=0.0;
-
-      for(int irt=0;irt<NRT;irt++)
-	{
-	  rT_avge[icent] += rT[irt]*rT_weight[icent][irt];
-	  wt += rT_weight[icent][irt];
-	}
-
-      rT_avge[icent] = rT_avge[icent]/wt;
-      //cout << " icent " << icent << " rT_avge " << rT_avge[icent] << endl;
-    }
-
   // as a check, get the average sigbr vs pT in each centrality bin
   //   -- this agrees perfectly with the results of "calculate_sigma_breakup.C"
   double sigbr_avge[NRAP][NCENT][NPT] = {0};
@@ -391,6 +462,7 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
 	}
     }
   */
+
   cout << "Average over centrality" << endl;
 
   // Get the average effect of the modification and absorption cross section within each centrality and  pT bin
@@ -414,11 +486,10 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
 		  // Because we want to average over all Jpsi in this centrality bin, we have to consider that ncoll is different at different irt so the Jpsi yield weight should be different
 		  // Number of collisions:
 		  //    The rT_weight at irt to supply the number of projectile-target collisions in that irt bin - i.e. events with 1 OR MORE N-N collisions
-		  // We have to weight the mod at each rT by the TAB at that rT. So we need for the shadowing:
+		  // We have to weight the mod at each rT by the T_A at that rT. So we need for the shadowing:
 		  //    The mod at irt
-		  //    The TAB at irt to weight the mod for that bin by jpsi ncoll scaling
+		  //    The T_A at irt to weight the mod for that bin by jpsi ncoll scaling
 		  // Multiplying these two gives something proportional to the modified Jpsi yield
-
 
 		  cent_pt_sigmod[irap][icent][ipt] += rT_weight[icent][irt]*sigmod[irap][ipt][irt] * thick[irt];
 		  wt += rT_weight[icent][irt] * thick[irt];
