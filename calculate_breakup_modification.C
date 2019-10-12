@@ -26,7 +26,7 @@ double get_WS_rho_0();
 // we will need to call functions from this macro
 #include "calculate_sigma_breakup.C"
 
-// only one of these ata a time!
+// only one of these at a a time!
 //#define PAU
 //#define PAL
 #define HEAU
@@ -42,9 +42,8 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
   set_breakup_parameters(sigma1, r0, vcc);
   cout << " Breakup model parameters set to sigma 1 = " << sigma1 << " r0 " << r0 << " vcc " << vcc << endl;
 
-  // choose target parameters
-  //int targ_index = 0;  // 0 for Au, 1 for Al
-  int targ_index = 1;  // 0 for Au, 1 for Al
+  // initially define target parameter, will be set to correct value later
+  int targ_index = 0;  // 0 for Au, 1 for Al
   
 #ifdef PAU
   // has to be 0 for Au target
@@ -52,7 +51,7 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
 #endif
   
 #ifdef PAL
-  // has to be 0 for Au target
+  // has to be 1 for Al target
   targ_index = 1;
 #endif
 
@@ -333,8 +332,8 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
   // As a check, calculate the average rT within each centrality bin using the rT distributions for the centrality bins
   //   -- this agrees perfectly with the results of "calculate_sigma_breakup.C"
   double rT_avge[NCENT];
-  double thick_avge[NCENT];
-  double thick_avge_ncoll[NCENT];
+  double thick_avge[NCENT]; // average T_A weighted only by r_T
+  double thick_avge_ncoll[NCENT];  // Ncoll weighted average T_A
   for(int icent=0;icent<NCENT;icent++)
     {
       rT_avge[icent]=0.0;
