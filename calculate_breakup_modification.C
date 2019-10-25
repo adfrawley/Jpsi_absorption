@@ -124,7 +124,7 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
 
   // combine glauber centralities to get the experimental ones
   //========================================
-  static const int NCENT = 7;  // includes MB
+  static const int NCENT = 8;  // includes MB and 0-20%
   TH1D *hrT[NCENT];
   hrT[0] = (TH1D*) hrT_in[0]->Clone();   // 0-5
   hrT[1] =  (TH1D*) hrT_in[1]->Clone();   // 5-10
@@ -142,7 +142,11 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
   hrT[6]->Add(hrT[3]);
   hrT[6]->Add(hrT[4]);
   hrT[6]->Add(hrT[5]);
-  
+  // 0-20% 
+  hrT[7] = (TH1D*) hrT[0]->Clone();
+  hrT[7]->Add(hrT[1]);
+  hrT[7]->Add(hrT[2]);
+
   double ncoll[NCENT] = {9.7, 8.4, 7.4, 6.1, 4.4, 2.6};
   int col[NCENT] = {kRed, kGreen, kBlue, kMagenta, kViolet, kRed, kBlack};
   int centlow[NCENT] = {0, 5, 10, 20, 40, 60, 0};
@@ -185,13 +189,16 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
 
   // combine glauber centralities to get the experimental ones
   //========================================
-  static const int NCENT = 4;  // includes MB
+  static const int NCENT = 6;  // includes MB and 40-60% and 60-72%
   TH1D *hrT[NCENT];
+  // 0-20%
   hrT[0] = (TH1D*) hrT_in[0]->Clone();   // 0-5
   hrT[0] ->Add( (TH1D*) hrT_in[1]->Clone());   // 5-10
   hrT[0]->Add((TH1D*) hrT_in[2]->Clone());   // 10-20
+  // 20-40%
   hrT[1] =  (TH1D*) hrT_in[3]->Clone();   // 20-30
   hrT[1]->Add( (TH1D*) hrT_in[4]->Clone());  // 30-40
+  // 40-72%
   hrT[2] =  (TH1D*) hrT_in[5]->Clone();   // 40-50
   hrT[2]->Add( (TH1D*) hrT_in[6]->Clone());  // 50-60
   hrT[2]->Add( (TH1D*) hrT_in[7]->Clone());  // 60-70
@@ -200,6 +207,11 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
   hrT[3] = (TH1D*) hrT[0]->Clone();
   hrT[3]->Add(hrT[1]);
   hrT[3]->Add(hrT[2]);
+  // 40-60%
+  hrT[4] = (TH1D*) hrT_in[5]->Clone();
+  hrT[4]->Add( (TH1D*) hrT_in[6]->Clone() );
+  // 60-72%
+  hrT[5] = (TH1D*) hrT_in[7]->Clone();
 
   double ncoll[NCENT] = {3.35, 2.3, 1.7, 2.1};
   int col[NCENT] = {kRed, kGreen, kBlue, kBlack};
@@ -242,7 +254,7 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
 
   // combine glauber centralities to get the experimental ones
   //========================================
-  static const int NCENT = 4;  // includes MB
+  static const int NCENT = 6;  // includes MB and 40-60% and 60-84%
   TH1D *hrT[NCENT];
   hrT[0] = (TH1D*) hrT_in[0]->Clone();   // 0-5
   hrT[0] ->Add( (TH1D*) hrT_in[1]->Clone());   // 5-10
@@ -257,11 +269,16 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
   hrT[3] = (TH1D*) hrT[0]->Clone();
   hrT[3]->Add(hrT[1]);
   hrT[3]->Add(hrT[2]);
+  // 40-60%
+  hrT[4] = (TH1D*) hrT_in[5]->Clone();
+  hrT[4]->Add( (TH1D*) hrT_in[6]->Clone() );
+  // 60-88%
+  hrT[5] = (TH1D*) hrT_in[7]->Clone();
   
   double ncoll[NCENT] = {};
   int col[NCENT] = {kRed, kGreen, kBlue, kBlack};
   int centlow[NCENT] = {0, 20, 40, 0};
-  int centhigh[NCENT] = {20,40,72,100};
+  int centhigh[NCENT] = {20,40,88,100};
   
 #endif
 
@@ -333,7 +350,7 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
   //   -- this agrees perfectly with the results of "calculate_sigma_breakup.C"
   double rT_avge[NCENT];
   double thick_avge[NCENT]; // average T_A weighted only by r_T
-  double thick_avge_ncoll[NCENT];  // Ncoll weighted average T_A
+  double thick_avge_ncoll[NCENT];  // Ncoll (really TA) weighted average T_A
   for(int icent=0;icent<NCENT;icent++)
     {
       rT_avge[icent]=0.0;
@@ -779,8 +796,8 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
       h->SetMaximum(2.0);
       
       TCanvas *cdatN = new TCanvas("cdatN","cdatN", 5,5,1600,800);
-      cdatN->Divide(3,2);
-      for(int icent=0; icent < NCENT-1; ++icent)
+      cdatN->Divide(3,3);
+      for(int icent=0; icent < NCENT; ++icent)
 	{
 	  cdatN->cd(icent+1);
 	  h->Draw();
@@ -791,8 +808,8 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
       // pT dependence S
       
       TCanvas *cdatS = new TCanvas("cdatS","cdatS", 5,5,1600,800);
-      cdatS->Divide(3,2);
-      for(int icent=0; icent < NCENT-1; ++icent)
+      cdatS->Divide(3,3);
+      for(int icent=0; icent < NCENT; ++icent)
 	{
 	  cdatS->cd(icent+1);
 	  h->Draw();

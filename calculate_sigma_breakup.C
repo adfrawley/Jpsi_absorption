@@ -22,6 +22,7 @@ double get_path_thickness(double b, double zstart);
 void set_WS_parameters(double ws_radius, double ws_diffusion, double rho_0, double mtarget);
 void set_breakup_parameters(double sigma1_in, double r0_in, double vcc_in);
 
+// Default values are for Au target, can be overridden when using 
 double rho_0 = 0.169;
 double mtarget = 197;
 // from the glauber_dau.inp file that I used                                                                          
@@ -38,7 +39,7 @@ double sigma1 = 7.2; double r0 = 0.16; double vcc = 1.0;
 void calculate_sigma_breakup()
 {
   // This main program exercises the function "return_sigma_breakup" 
-  // to calculate the breakup cross section for d+Au collisions at a specified rapidity
+  // to calculate the breakup cross section for p+Au collisions at a specified rapidity
 
   gROOT->SetStyle("Plain");
   gStyle->SetOptStat(0);
