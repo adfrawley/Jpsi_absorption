@@ -6,7 +6,7 @@ Universe        = vanilla
 Notification    = Never
 
 # The executable we want to run.
-Executable   = /phenix/hhj/frawley/pAu_CNM_calculations/runit_estimate_bu_errors
+Executable   = /sphenix/user/frawley/jpsi_breakup_modification/runit_estimate_bu_errors
 
 # The argument to pass to the executable.
 # process number
@@ -38,19 +38,19 @@ Priority        = +20
 
 # Used to give jobs a directory with respect to file input 
 # and output.
-Initialdir   = /phenix/hhj/frawley/pAu_CNM_calculations/
+Initialdir   = /sphenix/user/frawley/jpsi_breakup_modification
 
 # Input file given to the job.
 Input           = /dev/null
 
 # The job's stdout is sent to this file.
-Output       =  /phenix/hhj/frawley/pAu_CNM_calculations/estimate_output/log.out.$(Process)
+Output       =  /sphenix/user/frawley/jpsi_breakup_modification/estimate_output/log.out.$(Process)
 
 # The job's stderr is sent to this file.
-Error      =   /phenix/hhj/frawley/pAu_CNM_calculations/estimate_output/log.err.$(Process)
+Error      =   /sphenix/user/frawley/jpsi_breakup_modification/estimate_output/log.err.$(Process)
 
 # The condor log file for this job, useful when debugging.
-Log       =    /phenix/hhj/frawley/pAu_CNM_calculations/estimate_output/log.log.$(Process)
+Log       =    /sphenix/user/frawley/jpsi_breakup_modification/estimate_output/log.log.$(Process)
 
 # Email address to send notification to.
 #Notify_user     = afrawley@fsu.edu

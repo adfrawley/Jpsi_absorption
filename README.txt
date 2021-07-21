@@ -46,12 +46,12 @@ Also calculates the modification averaged over pT.
 "estimate_breakup_modification_errors.C"
 contains "#include calculate_breakup_modification.C"
 Used to estimate the errors for the breakup modification from the model parameter uncertainties obtained in "fit_parabola.C"
-Randomly varies the model fit parameters assuming a gaussian distribution with the width of the fit parameter uncertainties.
+s Randomly varies the model fit parameters assuming a gaussian distribution with the width of the fit parameter uncertainties.
 Calls "calculate_breakup_modification()" to get the modifications for each model parameter combination.
 "calculate_breakup_modification()" writes the modifications to a file using the process number to name the file.
 Repeats this for 1000 parameter combinations.
 
-"runit_bu_estimate_errors"
+i"runit_bu_estimate_errors"
 Script to run "estimate_breakup_modification_errors.C".
 Usage is
 runit_bu_estimate_errors <process number>
@@ -65,3 +65,17 @@ Reads in the condor output files written by
 "estimate_breakup_modification_errors.C"
 and makes a histogram for every rapidity and centrality bin (only pT integrated results have been made so far).
 
+Update on 7/19/2021:
+---------------------------
+Added the method "get_sigma_psi2s()" to "calculate_sigma_breakup.C". 
+If "jpsi = true" is set in "calculate_breakup_modification.C" 
+-- The mass is set to 3.4 GeV (average of three states)
+-- Passing that mass to "return_sigma_breakup()" causes "get_sigma()" to be called and that returns the psi(1S) sigma
+If "jpsi = false" is set
+.-- The mass is et to 3.7 GeV (the psi(2S) mass)
+-- Passing that mass to "return_sigma_breakup()" causes "get_sigma_psi2s()" to be called and that returns the ps(2S) sigma.
+The psi(2S) is assumed to have the same pT and rapidity distribution as the psi(1S). 
+-- Should scale pT distribution with pT/M? see arXiv:2006.15446 . Look into it.
+-- What about dN/dy?
+
+I also added a plot of the arm integrated modification to "process_bu_mod_error_estimate.C".

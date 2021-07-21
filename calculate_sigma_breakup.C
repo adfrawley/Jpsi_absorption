@@ -14,6 +14,7 @@
 
 double get_tau(double yrel, double MJpsi, double pt, double L);
 double get_sigma(double ccbar_roots, double tau);
+double get_sigma_psi2s(double ccbar_roots, double tau);
 double get_ccbar_sqrts(double yrel, double MJpsi, double pt);
 double return_sigma_breakup(double Ebeam, double mstate, double ystate, double pt, double mtarget, double L);
 double get_L(double Targmass);
@@ -48,8 +49,8 @@ void calculate_sigma_breakup()
   double Ebeam = 100;  // GeV
   double mtarget = 197;
   //double ystate = -2.075;  // specified rapidity
-  double ystate = -1.7;  // specified rapidity
-  //double ystate = -1.325;  // specified rapidity
+  double ystate = 0.0;  // specified rapidity
+  //double ystate = 2.075;  // specified rapidity
   double pt = 1.90;  // mean pT for d+Au J/psi
 
   /*
@@ -264,7 +265,13 @@ double return_sigma_breakup(double Ebeam, double Mstate, double ystate, double p
 
       tau_line += tau*zwt_ccbar;
       // Use the Arleo form for the tau dependence of the psi radius
-      double sigma = get_sigma(ccbar_roots, tau);
+
+      double sigma;
+      if(Mstate < 3.5)   // J/psi
+	sigma = get_sigma(ccbar_roots, tau);
+      else                           // psi(2S)
+	sigma = get_sigma_psi2s(ccbar_roots, tau);
+
       sigma_line += sigma*zwt_ccbar;
       LrT_line += path*zwt_ccbar;
       wt_line += zwt_ccbar;
@@ -327,7 +334,8 @@ double get_tau(double yrel, double MJpsi, double pt, double L)
   // Have to correct apparent distance traveled in nucleus by J/psi for the gamma of J/psi in nuclear rest frame to get proper time
   // gamma would be 7.09 if beta = 0.99, so in our example tau becomes 0.6 fm/c due to time dilation
   double tau = beta_z *L/gamma;
-
+  //  if(tau > 0.0002) 
+  //cout << " tau " << tau << " beta_z " << beta_z << " L " << L << " gamma " << gamma << endl;
   return tau;
 }
 
@@ -374,6 +382,40 @@ double get_sigma(double ccbar_roots, double tau)
     }
   //cout << "           average over states is sigma = " << sigma << endl;
       
+  return sigma;      
+}
+
+double get_sigma_psi2s(double ccbar_roots, double tau)
+{
+  // best fit values to global data from PRC 83 (2013) 054910
+ 
+  // The psi(2S)  is the highest mass charmonium bound state, no feeddown
+  // These are the numbers used by Arleo
+  double rpsi1s = 0.43;
+  double rpsi2s = 0.87;
+
+  // This is the model of Arleo PRC61 where rccbar is linear in tau
+  double rccbar = r0 + vcc*tau;
+
+  if(rccbar > rpsi2s)
+    rccbar = rpsi2s;
+
+  // From Arleo PRC61 
+  // The reference radius is the J/psi one, so that the cross section is larger for the fully formed excited states
+  double sigma = sigma1* pow(ccbar_roots/10.0,0.4) * pow(rccbar/rpsi1s,2);
+
+      /*
+      cout << " sigma1 " << sigma1 
+	   << " r0 " << r0
+	   << " vcc " << vcc
+	   << " tau " << tau 
+	   << " ccbar_roots " << ccbar_roots
+	   << " rpsi1s " << rpsi1s
+	   << " rccbar " << rccbar
+	   << " sigma " << sigma 
+	   << endl;
+      */
+
   return sigma;      
 }
 

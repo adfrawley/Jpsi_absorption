@@ -27,9 +27,9 @@ double get_WS_rho_0();
 #include "calculate_sigma_breakup.C"
 
 // only one of these at a a time!
-//#define PAU
+#define PAU
 //#define PAL
-#define HEAU
+//#define HEAU
 
 // set parameters here so macro can be called by condor with different parameters, for error estimation
 void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, double vcc = 1.0, int process = 0) 
@@ -37,6 +37,9 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
   gROOT->SetStyle("Plain");
   gStyle->SetOptStat(0);
   gStyle->SetOptTitle(0);
+
+  // choose the state (jpsi = true for J/psi,  jpsi = false for psi(2S)
+  bool jpsi = false;
 
   // Set the breakup parameters in "calculate_sigma_breakup")
   set_breakup_parameters(sigma1, r0, vcc);
@@ -64,6 +67,7 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
   double ptstep = 0.5;
   
   // set up the rapidity 
+  // currently assumed to be the same for psi(1S) and psi(2S)
   static const int NRAP = 8;
   double y[NRAP] = {-2.075, -1.825 , -1.575, -1.325, 1.325, 1.575, 1.825, 2.075};   
   double BdNdy[NRAP] = {0.325, 0.515, 0.68, 0.90, 0.66, 0.53, 0.41, 0.30};
@@ -135,14 +139,14 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
   hrT[4]->Add( (TH1D*) hrT_in[6]->Clone());  // 50-60
   hrT[5] =  (TH1D*) hrT_in[8]->Clone();   // is this  actually 60-84, based on counts?
   hrT[5]->Add( (TH1D*) hrT_in[7]->Clone());  // 60-70
-  // MB
+  // hrT[6] is MB
   hrT[6] = (TH1D*) hrT[0]->Clone();
   hrT[6]->Add(hrT[1]);
   hrT[6]->Add(hrT[2]);
   hrT[6]->Add(hrT[3]);
   hrT[6]->Add(hrT[4]);
   hrT[6]->Add(hrT[5]);
-  // 0-20% 
+  // hrT[7] is 0-20% 
   hrT[7] = (TH1D*) hrT[0]->Clone();
   hrT[7]->Add(hrT[1]);
   hrT[7]->Add(hrT[2]);
@@ -391,6 +395,8 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
   //define the fit parameters for each rapidity bin
   //Based on fits to J/psi Invariant Yields * Acceptance from run6+run8 p+p
   //backward/forward rapidity p+p, from Darren
+  // currently assumed to be the same for psi(2S)
+  //   -- data? maybe should scale with pT/M? see arXiv:2006.15446 
 
   fpt_par[0][0] = 5.02367e-09; 
   fpt_par[0][1] = 2.94113;
@@ -430,7 +436,11 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
 
   // Jpsi at RHIC
   double Ebeam = 100;
-  double mstate = 3.4;
+  double mstate;
+  if(jpsi) 
+    mstate = 3.4;  // average of three states
+  else
+    mstate = 3.7;  // psi(2S) mass   no feed down to psi(2S)
 
   double sigbr[NRAP][NPT][NRT];
   for(int irap=0;irap < NRAP;++irap)
@@ -617,6 +627,8 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
 	      wt += BdNdy[irap];
 	    }
 	  cent_sigmod_arm[iarm][icent] /= wt;
+
+	  cout << " iarm " << iarm << " icent " << icent << "  cent_sigmod_arm " << cent_sigmod_arm[iarm][icent] << endl;
 	}
     }
 
@@ -628,7 +640,7 @@ void calculate_breakup_modification(double sigma1 = 7.2, double r0 = 0.16, doubl
     {
       for(int icent=0; icent<NCENT; ++icent)
 	{
-	  fout <<  y[irap] << "  " << icent << "  " << sigma1 << "  " << r0 << "  " << vcc << "  " << cent_sigmod[icent][irap] << endl;      
+	  fout <<  y[irap] << "  " << icent << "  " << sigma1 << "  " << r0 << "  " << vcc << "  " << cent_sigmod[icent][irap] << "  " << BdNdy[irap] << endl;      
 	}
     }
   fout.close();
